@@ -1,0 +1,13 @@
+<Window x:Class="SystemMonitor.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SystemMonitor Overlay"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ShowActivated="False" Focusable="False"
+        ResizeMode="NoResize" SizeToContent="WidthAndHeight">
+    <Border Background="#99000000" CornerRadius="6" Padding="12,4">
+        <TextBlock x:Name="Readout"
+                   FontFamily="Consolas" FontSize="14" FontWeight="SemiBold"
+                   Foreground="#FFE8FFE8" Text="starting..." />
+    </Border>
+</Window>
