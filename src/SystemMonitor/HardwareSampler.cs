@@ -37,10 +37,6 @@ public sealed class HardwareSampler : IDisposable
         return new HardwareReading(cpuLoad, cpuTemp, gpuLoad, gpuTemp);
     }
 
-    public IEnumerable<string> DumpSensors() =>
-        _computer.Hardware.SelectMany(hw => hw.Sensors.Select(s =>
-            $"  {hw.HardwareType}/{hw.Name} | {s.SensorType} | {s.Name} = {s.Value?.ToString() ?? "null"}"));
-
     // First sensor of the given type matching a preferred name, in priority order.
     private static float? Find(IHardware hw, SensorType type, params string[] names)
     {

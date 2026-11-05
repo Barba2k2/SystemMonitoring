@@ -67,26 +67,6 @@ public partial class OverlayWindow : Window
             $"{Fmt(fps, " FPS")}";
 
         PositionTopCenter();
-        WriteDiag((int)pid, fps);
-    }
-
-    // Temporary: dumps what the sensors and ETW see, so missing values can be traced.
-    private int _diagTicks;
-    private void WriteDiag(int pid, float? fps)
-    {
-        if (++_diagTicks % 10 != 1) return;
-        string name;
-        try { name = System.Diagnostics.Process.GetProcessById(pid).ProcessName; } catch { name = "?"; }
-        var ids = string.Join(", ", _fps.SeenEventIds.OrderBy(k => k.Key).Select(k => $"{k.Key}:{k.Value}"));
-        var top = string.Join(", ", _fps.LastRates.OrderByDescending(k => k.Value).Take(4).Select(k =>
-        {
-            string n;
-            try { n = System.Diagnostics.Process.GetProcessById(k.Key).ProcessName; } catch { n = "?"; }
-            return $"{n}({k.Key})={k.Value:0}";
-        }));
-        var text = $"{DateTime.Now:HH:mm:ss} fg={name}({pid}) fps={fps?.ToString("0.0") ?? "null"} topPresenters=[{top}] dxgiEvents=[{ids}]\n";
-        try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "sysmon-diag.txt"), text); }
-        catch { /* diagnostics must never break the overlay */ }
     }
 
     private static string Fmt(float? v, string unit) =>

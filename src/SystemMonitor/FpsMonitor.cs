@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.Diagnostics.Tracing.Session;
 
@@ -29,12 +28,6 @@ public sealed class FpsMonitor : IDisposable
     private readonly TraceEventSession _session;
     private readonly Thread _worker;
 
-    /// <summary>Diagnostic: DXGI event id -> count, to confirm the provider delivers events at all.</summary>
-    public ConcurrentDictionary<int, int> SeenEventIds { get; } = new();
-
-    /// <summary>Diagnostic: per-process FPS from the most recent <see cref="Sample"/> call.</summary>
-    public IReadOnlyDictionary<int, float> LastRates { get; private set; } = new Dictionary<int, float>();
-
     public FpsMonitor()
     {
         _session = new TraceEventSession(SessionName) { StopOnDispose = true };
@@ -44,10 +37,8 @@ public sealed class FpsMonitor : IDisposable
         {
             _session.Source.Dynamic.All += data =>
             {
-                if (data.ProviderGuid != DxgiProvider) return;
-
-                SeenEventIds.AddOrUpdate((int)data.ID, 1, (_, n) => n + 1);
-                if ((int)data.ID == DxgiPresentStart) Record(data.ProcessID, data.TimeStamp.Ticks);
+                if (data.ProviderGuid == DxgiProvider && (int)data.ID == DxgiPresentStart)
+                    Record(data.ProcessID, data.TimeStamp.Ticks);
             };
             _session.Source.Process();
         })
@@ -69,24 +60,17 @@ public sealed class FpsMonitor : IDisposable
     /// <summary>FPS of <paramref name="pid"/> over the last second of event time; null if it stopped presenting.</summary>
     public float? Sample(int pid)
     {
-        var rates = new Dictionary<int, float>();
         long now = Stopwatch.GetTimestamp();
 
         lock (_gate)
         {
+            // Drop processes that stopped presenting so the dictionary stays small.
             foreach (var (key, frames) in _pids.ToArray())
-            {
                 if ((now - frames.LastArrival) / (double)Stopwatch.Frequency > StaleSeconds)
-                {
                     _pids.Remove(key);
-                    continue;
-                }
-                if (RateOf(frames.Times) is float rate) rates[key] = rate;
-            }
-        }
 
-        LastRates = rates;
-        return rates.TryGetValue(pid, out float fps) ? fps : null;
+            return _pids.TryGetValue(pid, out var own) ? RateOf(own.Times) : null;
+        }
     }
 
     // (frames - 1) intervals across the span between first and last event in the window.

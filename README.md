@@ -33,4 +33,3 @@ Then start `src/SystemMonitor/bin/Release/net8.0-windows/SystemMonitor.exe` as a
 
 - FPS covers DirectX 9-12 only; Vulkan and OpenGL need the DxgKrnl ETW provider.
 - No anti-cheat interaction: nothing is injected into games.
-- A diagnostic log is written to `%TEMP%\sysmon-diag.txt` every ~5s (to be removed).
